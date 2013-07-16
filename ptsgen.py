@@ -4,7 +4,7 @@ from math import pi
 from netCDF4 import Dataset as NC
 import numpy as np
 
-def generate(tmin, tmax, orig, ampl, n=101, output=None, var='T'):
+def generate(func, tmin, tmax, orig, ampl, n=101, output=None, var='T'):
     """Generate NetCDF file"""
 
     # initialize netCDF file
@@ -18,7 +18,10 @@ def generate(tmin, tmax, orig, ampl, n=101, output=None, var='T'):
     # write data and close
     t = np.linspace(0, 1, n)
     timevar[:] = tmin + (tmax-tmin)*t
-    tempvar[:] = orig + ampl/2*(1-np.cos(2*pi*t))
+    if func == 'ramp':
+      tempvar[:] = orig + ampl*t
+    elif func == 'cos':
+      tempvar[:] = orig + ampl/2*(1-np.cos(2*pi*t))
     nc.close()
 
 if __name__ == "__main__":
@@ -27,6 +30,8 @@ if __name__ == "__main__":
     # Argument parser
     parser = argparse.ArgumentParser(
       description='''Scalar offsets time series generator for PISM''')
+    parser.add_argument('func', type=str, help='Function to use',
+      choices=['ramp', 'cos'])
     parser.add_argument('tmin', type=float, help='Start time in years')
     parser.add_argument('tmax', type=float, help='End time in years')
     parser.add_argument('orig', type=float, help='Value at origin')
@@ -40,5 +45,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Generate netCDF file
-    generate(args.tmin, args.tmax, args.orig, args.ampl, args.length,
-      args.output, args.variable)
+    generate(args.func, args.tmin, args.tmax, args.orig, args.ampl,
+      args.length, args.output, args.variable)
