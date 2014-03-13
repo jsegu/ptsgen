@@ -46,6 +46,18 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None, var='T'):
             time, d18o = np.genfromtxt('grip.txt', skip_header=37,
                                        usecols=(2, 1), unpack=True)
             temp = -11.88*(d18o-d18o[0]) - 0.1925*(d18o**2-d18o[0]**2)
+        elif func == 'odp1012':
+            if not os.path.isfile('odp1012.txt'):
+                url = ('ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
+                       'contributions_by_author/herbert2001/odp1012.txt')
+                urllib.urlretrieve(url, 'odp1012.txt')
+            time, temp = np.genfromtxt('odp1012.txt', delimiter='\t',
+                                       skip_header=1, usecols=(6, 8),
+                                       missing_values=-999, usemask=True,
+                                       unpack=True)
+            temp.mask += time.mask
+            time = time.compressed()*1000
+            temp = temp.compressed()-temp[0]
         time = -time[::-1]
         temp = temp[::-1]
         avep = (-30e3 < time) * (time < -20e3)
@@ -65,7 +77,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='''Scalar offsets time series generator for PISM''')
     parser.add_argument('func', type=str, help='Function to use',
-                        choices=['ramp', 'cos', 'epica', 'grip'])
+                        choices=['ramp', 'cos', 'epica', 'grip', 'odp1012'])
     parser.add_argument('tmin', type=float, help='Start time in years')
     parser.add_argument('tmax', type=float, help='End time in years')
     parser.add_argument('orig', type=float, help='Value at origin')
