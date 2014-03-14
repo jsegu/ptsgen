@@ -1,10 +1,48 @@
 #!/usr/bin/env python
+"""PISM time series generator"""
 
 import os
 import urllib
 from math import pi
 from netCDF4 import Dataset as NC
 import numpy as np
+
+data_sources = {
+    'epica':    'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
+                'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
+    'grip':     'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/icecore/'
+                'greenland/summit/grip/isotopes/gripd18o.txt',
+    'odp1012':  'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
+                'contributions_by_author/herbert2001/odp1012.txt'}
+
+
+def retrieve(rec):
+    """Retrieve record data from the web unless local copy exists."""
+    filename = rec + '.txt'
+    if not os.path.isfile(filename):
+        urllib.urlretrieve(data_sources[rec], filename)
+    return filename
+
+
+def extract(rec):
+    """Extract temperature anomaly data from local file"""
+    if rec == 'epica':
+        time, temp = np.genfromtxt('epica.txt', delimiter=(4, 13, 17, 13, 13),
+                                   skip_header=104, skip_footer=1,
+                                   usecols = (2, 4), unpack=True)
+    elif rec == 'grip':
+        time, temp = np.genfromtxt('grip.txt', skip_header=37,
+                                   usecols=(2, 1), unpack=True)
+        temp = -11.88*(temp-temp[0]) - 0.1925*(temp**2-temp[0]**2)
+    elif rec == 'odp1012':
+        time, temp = np.genfromtxt('odp1012.txt', delimiter='\t',
+                                   skip_header=1, usecols=(6, 8),
+                                   missing_values=-999, usemask=True,
+                                   unpack=True)
+        temp.mask += time.mask
+        time = time.compressed()*1000
+        temp = temp.compressed()-temp[0]
+    return time, temp
 
 
 def generate(func, tmin, tmax, orig, ampl, n=101, output=None, var='T'):
@@ -29,35 +67,8 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None, var='T'):
 
     # in case of a proxy record
     else:
-        if func == 'epica':
-            if not os.path.isfile('epica.txt'):
-                url = ('ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
-                       'icecore/antarctica/epica_domec/edc3deuttemp2007.txt')
-                urllib.urlretrieve(url, 'epica.txt')
-            time, temp = np.genfromtxt('epica.txt', dtype='f4',
-                                       delimiter=(4, 13, 17, 13, 13),
-                                       skip_header=104, skip_footer=1,
-                                       usecols = (2, 4), unpack=True)
-        elif func == 'grip':
-            if not os.path.isfile('grip.txt'):
-                url = ('ftp://ftp.ncdc.noaa.gov/pub/data/paleo/icecore/'
-                       'greenland/summit/grip/isotopes/gripd18o.txt')
-                urllib.urlretrieve(url, 'grip.txt')
-            time, d18o = np.genfromtxt('grip.txt', skip_header=37,
-                                       usecols=(2, 1), unpack=True)
-            temp = -11.88*(d18o-d18o[0]) - 0.1925*(d18o**2-d18o[0]**2)
-        elif func == 'odp1012':
-            if not os.path.isfile('odp1012.txt'):
-                url = ('ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
-                       'contributions_by_author/herbert2001/odp1012.txt')
-                urllib.urlretrieve(url, 'odp1012.txt')
-            time, temp = np.genfromtxt('odp1012.txt', delimiter='\t',
-                                       skip_header=1, usecols=(6, 8),
-                                       missing_values=-999, usemask=True,
-                                       unpack=True)
-            temp.mask += time.mask
-            time = time.compressed()*1000
-            temp = temp.compressed()-temp[0]
+        retrieve(func)
+        time, temp = extract(func)
         time = -time[::-1]
         temp = temp[::-1]
         avep = (-30e3 < time) * (time < -20e3)
