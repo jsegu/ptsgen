@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 # plot
 for func in ['cos', 'ramp',
-             'odp1012', 'odp1020',
+             'lapaz21p', 'odp1012', 'odp1020',
              'domefuji', 'epica',  'vostok', 'grip']:
     nc = Dataset('%s.nc' % func)
     time = nc.variables['time'][:]/1000.

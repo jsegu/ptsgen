@@ -9,6 +9,7 @@ import numpy as np
 
 _noaa = 'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
 data_sources = {
+    'lapaz21p': _noaa + 'contributions_by_author/herbert2001/lapaz21p.txt',
     'odp1012':  _noaa + 'contributions_by_author/herbert2001/odp1012.txt',
     'odp1020':  _noaa + 'contributions_by_author/herbert2001/odp1020.txt',
     'domefuji': _noaa + 'icecore/antarctica/domefuji/df2012isotope-temperature.txt',
@@ -44,6 +45,14 @@ def extract(rec):
         time, temp = np.genfromtxt('grip.txt', skip_header=37,
                                    usecols=(2, 1), unpack=True)
         temp = -11.88*(temp-temp[0]) - 0.1925*(temp**2-temp[0]**2)
+    elif rec == 'lapaz21p':
+        time, temp = np.genfromtxt('lapaz21p.txt', delimiter='\t',
+                                   skip_header=1, usecols=(2, 5),
+                                   missing_values=-999, usemask=True,
+                                   unpack=True)
+        time.mask += temp.mask
+        time = time.compressed()*1000
+        temp = temp.compressed()-temp[0]
     elif rec == 'odp1012':
         time, temp = np.genfromtxt('odp1012.txt', delimiter='\t',
                                    skip_header=1, usecols=(6, 8),
@@ -107,7 +116,7 @@ if __name__ == "__main__":
         description='''Scalar offsets time series generator for PISM''')
     parser.add_argument('func', type=str, help='Function to use',
                         choices=['ramp', 'cos',
-                                 'odp1012', 'odp1020',
+                                 'lapaz21p', 'odp1012', 'odp1020',
                                  'domefuji', 'epica', 'vostok', 'grip'])
     parser.add_argument('tmin', type=float, help='Start time in years')
     parser.add_argument('tmax', type=float, help='End time in years')
