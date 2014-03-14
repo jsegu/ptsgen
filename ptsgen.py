@@ -40,7 +40,6 @@ def extract(rec):
     elif rec == 'vostok':
         time, temp = np.genfromtxt('vostok.txt', skip_header=111,
                                    usecols=(1, 3), unpack=True)
-        temp = -11.88*(temp-temp[0]) - 0.1925*(temp**2-temp[0]**2)
     elif rec == 'grip':
         time, temp = np.genfromtxt('grip.txt', skip_header=37,
                                    usecols=(2, 1), unpack=True)
