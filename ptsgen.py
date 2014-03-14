@@ -10,6 +10,7 @@ import numpy as np
 _noaa = 'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
 data_sources = {
     'odp1012':  _noaa + 'contributions_by_author/herbert2001/odp1012.txt',
+    'domefuji': _noaa + 'icecore/antarctica/domefuji/df2012isotope-temperature.txt',
     'epica':    _noaa + 'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
     'vostok':   _noaa + 'icecore/antarctica/vostok/deutnat.txt',
     'grip':     _noaa + 'icecore/greenland/summit/grip/isotopes/gripd18o.txt'}
@@ -25,6 +26,11 @@ def retrieve(rec):
 
 def extract(rec):
     """Extract temperature anomaly data from local file"""
+    if rec == 'domefuji':
+        time, temp = np.genfromtxt('domefuji.txt',
+                                   skip_header=1795,
+                                   usecols = (0, 4), unpack=True)
+        time *= 1000
     if rec == 'epica':
         time, temp = np.genfromtxt('epica.txt', delimiter=(4, 13, 17, 13, 13),
                                    skip_header=104, skip_footer=1,
@@ -91,8 +97,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='''Scalar offsets time series generator for PISM''')
     parser.add_argument('func', type=str, help='Function to use',
-                        choices=['ramp', 'cos', 'epica', 'grip', 'odp1012',
-                                 'vostok'])
+                        choices=['ramp', 'cos',
+                                 'domefuji', 'epica', 'vostok',
+                                 'grip', 'odp1012'])
     parser.add_argument('tmin', type=float, help='Start time in years')
     parser.add_argument('tmax', type=float, help='End time in years')
     parser.add_argument('orig', type=float, help='Value at origin')

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for func in ramp cos epica grip odp1012 vostok
+for func in ramp cos epica grip odp1012 vostok domefuji
 do
 	python2 ptsgen.py $func -120000 0 0 -10 -o $func.nc
 done
