@@ -4,7 +4,7 @@ from netCDF4 import Dataset
 from matplotlib import pyplot as plt
 
 # plot
-for func in ['cos', 'ramp', 'grip', 'epica', 'odp1012']:
+for func in ['cos', 'ramp', 'grip', 'epica', 'odp1012', 'vostok']:
     nc = Dataset('%s.nc' % func)
     time = nc.variables['time'][:]/1000.
     temp = nc.variables['delta_T'][:]

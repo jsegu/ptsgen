@@ -7,13 +7,12 @@ from math import pi
 from netCDF4 import Dataset as NC
 import numpy as np
 
+_noaa = 'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
 data_sources = {
-    'epica':    'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
-                'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
-    'grip':     'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/icecore/'
-                'greenland/summit/grip/isotopes/gripd18o.txt',
-    'odp1012':  'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
-                'contributions_by_author/herbert2001/odp1012.txt'}
+    'odp1012':  _noaa + 'contributions_by_author/herbert2001/odp1012.txt',
+    'epica':    _noaa + 'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
+    'vostok':   _noaa + 'icecore/antarctica/vostok/deutnat.txt',
+    'grip':     _noaa + 'icecore/greenland/summit/grip/isotopes/gripd18o.txt'}
 
 
 def retrieve(rec):
@@ -30,6 +29,10 @@ def extract(rec):
         time, temp = np.genfromtxt('epica.txt', delimiter=(4, 13, 17, 13, 13),
                                    skip_header=104, skip_footer=1,
                                    usecols = (2, 4), unpack=True)
+    elif rec == 'vostok':
+        time, temp = np.genfromtxt('vostok.txt', skip_header=111,
+                                   usecols=(1, 3), unpack=True)
+        temp = -11.88*(temp-temp[0]) - 0.1925*(temp**2-temp[0]**2)
     elif rec == 'grip':
         time, temp = np.genfromtxt('grip.txt', skip_header=37,
                                    usecols=(2, 1), unpack=True)
@@ -88,7 +91,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='''Scalar offsets time series generator for PISM''')
     parser.add_argument('func', type=str, help='Function to use',
-                        choices=['ramp', 'cos', 'epica', 'grip', 'odp1012'])
+                        choices=['ramp', 'cos', 'epica', 'grip', 'odp1012',
+                                 'vostok'])
     parser.add_argument('tmin', type=float, help='Start time in years')
     parser.add_argument('tmax', type=float, help='End time in years')
     parser.add_argument('orig', type=float, help='Value at origin')
