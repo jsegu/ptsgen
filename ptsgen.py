@@ -10,6 +10,7 @@ import numpy as np
 _noaa = 'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
 data_sources = {
     'odp1012':  _noaa + 'contributions_by_author/herbert2001/odp1012.txt',
+    'odp1020':  _noaa + 'contributions_by_author/herbert2001/odp1020.txt',
     'domefuji': _noaa + 'icecore/antarctica/domefuji/df2012isotope-temperature.txt',
     'epica':    _noaa + 'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
     'vostok':   _noaa + 'icecore/antarctica/vostok/deutnat.txt',
@@ -29,12 +30,12 @@ def extract(rec):
     if rec == 'domefuji':
         time, temp = np.genfromtxt('domefuji.txt',
                                    skip_header=1795,
-                                   usecols = (0, 4), unpack=True)
+                                   usecols=(0, 4), unpack=True)
         time *= 1000
     if rec == 'epica':
         time, temp = np.genfromtxt('epica.txt', delimiter=(4, 13, 17, 13, 13),
                                    skip_header=104, skip_footer=1,
-                                   usecols = (2, 4), unpack=True)
+                                   usecols=(2, 4), unpack=True)
     elif rec == 'vostok':
         time, temp = np.genfromtxt('vostok.txt', skip_header=111,
                                    usecols=(1, 3), unpack=True)
@@ -49,6 +50,14 @@ def extract(rec):
                                    missing_values=-999, usemask=True,
                                    unpack=True)
         temp.mask += time.mask
+        time = time.compressed()*1000
+        temp = temp.compressed()-temp[0]
+    elif rec == 'odp1020':
+        time, temp = np.genfromtxt('odp1020.txt', delimiter='\t',
+                                   skip_header=1, usecols=(4, 7),
+                                   missing_values=-999, usemask=True,
+                                   unpack=True)
+        time.mask += temp.mask
         time = time.compressed()*1000
         temp = temp.compressed()-temp[0]
     return time, temp
@@ -98,8 +107,8 @@ if __name__ == "__main__":
         description='''Scalar offsets time series generator for PISM''')
     parser.add_argument('func', type=str, help='Function to use',
                         choices=['ramp', 'cos',
-                                 'domefuji', 'epica', 'vostok',
-                                 'grip', 'odp1012'])
+                                 'odp1012', 'odp1020',
+                                 'domefuji', 'epica', 'vostok', 'grip'])
     parser.add_argument('tmin', type=float, help='Start time in years')
     parser.add_argument('tmax', type=float, help='End time in years')
     parser.add_argument('orig', type=float, help='Value at origin')
