@@ -28,44 +28,26 @@ def retrieve(rec):
 
 def extract(rec):
     """Extract temperature anomaly data from local file"""
+    txtkw = {
+        'domefuji': {'skip_header': 1795, 'usecols': (0, 4)},
+        'epica':    {'delimiter': (4, 13, 17, 13, 13),
+                     'skip_header': 104, 'skip_footer': 1, 'usecols': (2, 4)},
+        'vostok':   {'skip_header': 111, 'usecols': (1, 3)},
+        'grip':     {'skip_header': 37, 'usecols': (2, 1)},
+        'lapaz21p': {'delimiter': '\t', 'skip_header': 1, 'usecols': (2, 5),
+                     'missing_values': -999, 'usemask': True},
+        'odp1012':  {'delimiter': '\t', 'skip_header': 1, 'usecols': (6, 8),
+                     'missing_values': -999, 'usemask': True},
+        'odp1020':  {'delimiter': '\t', 'skip_header': 1, 'usecols': (4, 7),
+                     'missing_values': -999, 'usemask': True}}[rec]
+    time, temp = np.genfromtxt(rec + '.txt', unpack=True, **txtkw)
     if rec == 'domefuji':
-        time, temp = np.genfromtxt('domefuji.txt',
-                                   skip_header=1795,
-                                   usecols=(0, 4), unpack=True)
         time *= 1000
-    if rec == 'epica':
-        time, temp = np.genfromtxt('epica.txt', delimiter=(4, 13, 17, 13, 13),
-                                   skip_header=104, skip_footer=1,
-                                   usecols=(2, 4), unpack=True)
-    elif rec == 'vostok':
-        time, temp = np.genfromtxt('vostok.txt', skip_header=111,
-                                   usecols=(1, 3), unpack=True)
     elif rec == 'grip':
-        time, temp = np.genfromtxt('grip.txt', skip_header=37,
-                                   usecols=(2, 1), unpack=True)
         temp = -11.88*(temp-temp[0]) - 0.1925*(temp**2-temp[0]**2)
-    elif rec == 'lapaz21p':
-        time, temp = np.genfromtxt('lapaz21p.txt', delimiter='\t',
-                                   skip_header=1, usecols=(2, 5),
-                                   missing_values=-999, usemask=True,
-                                   unpack=True)
+    elif rec in ('lapaz21p', 'odp1012', 'odp1020'):
         time.mask += temp.mask
-        time = time.compressed()*1000
-        temp = temp.compressed()-temp[0]
-    elif rec == 'odp1012':
-        time, temp = np.genfromtxt('odp1012.txt', delimiter='\t',
-                                   skip_header=1, usecols=(6, 8),
-                                   missing_values=-999, usemask=True,
-                                   unpack=True)
         temp.mask += time.mask
-        time = time.compressed()*1000
-        temp = temp.compressed()-temp[0]
-    elif rec == 'odp1020':
-        time, temp = np.genfromtxt('odp1020.txt', delimiter='\t',
-                                   skip_header=1, usecols=(4, 7),
-                                   missing_values=-999, usemask=True,
-                                   unpack=True)
-        time.mask += temp.mask
         time = time.compressed()*1000
         temp = temp.compressed()-temp[0]
     return time, temp
