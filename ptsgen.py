@@ -82,6 +82,12 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
         temp = temp[::-1]
         t1, t2 = scale_interval
         temp /= temp[(t1 < time) * (time < t2)].mean()
+        if time[-1] < tmax:
+            time = np.append(time, tmax)
+            temp = np.append(temp, temp[-1])
+        if time[0] > tmin:
+            time = np.insert(time, 0, tmin)
+            temp = np.insert(temp, 0, temp[0])
         timevar[:] = time
         tempvar[:] = orig + ampl*temp
 
