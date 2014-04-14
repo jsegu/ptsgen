@@ -53,7 +53,8 @@ def extract(rec):
     return time, temp
 
 
-def generate(func, tmin, tmax, orig, ampl, n=101, output=None, var='T'):
+def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
+             scale_interval=(-32e3, -22e3), var='T'):
     """Generate NetCDF file"""
 
     # initialize netCDF file
@@ -79,9 +80,8 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None, var='T'):
         time, temp = extract(func)
         time = -time[::-1]
         temp = temp[::-1]
-        avep = (-30e3 < time) * (time < -20e3)
-        tmin = temp[avep].mean()
-        temp = temp/tmin
+        t1, t2 = scale_interval
+        temp /= temp[(t1 < time) * (time < t2)].mean()
         timevar[:] = time
         tempvar[:] = orig + ampl*temp
 
@@ -106,6 +106,9 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--length', type=int, default=101,
                         help='Length of time series (default: %(default)s)')
     parser.add_argument('-o', '--output', help='output file')
+    parser.add_argument('-i', '--scale-interval', type=float, nargs=2,
+                        default=(-32e3, -22e3), metavar=('T1', 'T2'),
+                        help='Record scaling time interval (default: %(default)s)')
     parser.add_argument('-v', '--variable',
                         choices=['T', 'P'], default='T',
                         help='Variable name (default: %(default)s)')
@@ -113,4 +116,4 @@ if __name__ == "__main__":
 
     # Generate netCDF file
     generate(args.func, args.tmin, args.tmax, args.orig, args.ampl,
-             args.length, args.output, args.variable)
+             args.length, args.output, args.scale_interval, args.variable)
