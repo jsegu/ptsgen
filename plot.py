@@ -7,7 +7,8 @@ from matplotlib import pyplot as plt
 plt.rc('font', size=8)
 funclist = ['cos', 'ramp',
             'lapaz21p', 'odp1012', 'odp1020',
-            'domefuji', 'epica',  'vostok', 'grip', 'guliya']
+            'domefuji', 'epica',  'vostok',
+            'ngrip', 'grip', 'guliya']
 
 # plot
 for i, func in enumerate(funclist):

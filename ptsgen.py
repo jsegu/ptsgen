@@ -15,6 +15,7 @@ data_sources = {
     'domefuji': _noaa + 'icecore/antarctica/domefuji/df2012isotope-temperature.txt',
     'epica':    _noaa + 'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
     'vostok':   _noaa + 'icecore/antarctica/vostok/deutnat.txt',
+    'ngrip':    _noaa + 'icecore/greenland/summit/ngrip/isotopes/ngrip-d18o-50yr.txt',
     'grip':     _noaa + 'icecore/greenland/summit/grip/isotopes/gripd18o.txt',
     'guliya':   _noaa + 'icecore/trop/guliya/guliya1997.txt'}
 
@@ -34,6 +35,8 @@ def extract(rec):
         'epica':    {'delimiter': (4, 13, 17, 13, 13),
                      'skip_header': 104, 'skip_footer': 1, 'usecols': (2, 4)},
         'vostok':   {'skip_header': 111, 'usecols': (1, 3)},
+        'ngrip':    {'skip_header': 80, 'usecols': (0, 1),
+                     'converters': {0: lambda s: float(s.replace(',',''))}},
         'grip':     {'skip_header': 37, 'usecols': (2, 1)},
         'guliya':   {'skip_header': 445, 'skip_footer': 33, 'usecols': (0, 1)},
         'lapaz21p': {'delimiter': '\t', 'skip_header': 1, 'usecols': (2, 5),
@@ -43,9 +46,12 @@ def extract(rec):
         'odp1020':  {'delimiter': '\t', 'skip_header': 1, 'usecols': (4, 7),
                      'missing_values': -999, 'usemask': True}}[rec]
     time, temp = np.genfromtxt(rec + '.txt', unpack=True, **txtkw)
+    if rec == 'ngrip':
+        temp = temp[::2]
+        time = time[::2]
     if rec == 'domefuji':
         time *= 1000
-    elif rec == 'grip':
+    elif rec in ('grip', 'ngrip'):
         temp = -11.88*(temp-temp[0]) - 0.1925*(temp**2-temp[0]**2)
     elif rec == 'guliya':
         time *= 1000
@@ -110,7 +116,7 @@ if __name__ == "__main__":
                         choices=['ramp', 'cos',
                                  'lapaz21p', 'odp1012', 'odp1020',
                                  'domefuji', 'epica', 'vostok',
-                                 'grip', 'guliya'])
+                                 'ngrip', 'grip', 'guliya'])
     parser.add_argument('tmin', type=float, help='Start time in years')
     parser.add_argument('tmax', type=float, help='End time in years')
     parser.add_argument('orig', type=float, help='Value at origin')
