@@ -9,18 +9,36 @@ funclist = ['cos', 'ramp',
             'lapaz21p', 'odp1012', 'odp1020',
             'domefuji', 'epica',  'vostok',
             'ngrip', 'grip', 'guliya']
+exptlist = range(4)
 
-# plot
+# initialize figure
+fig, grid = plt.subplots(1, 2)
+
+# plot various functions
+ax = grid[0]
 for i, func in enumerate(funclist):
     nc = Dataset(func + '.nc')
     time = nc.variables['time'][:]/1000.
     temp = nc.variables['delta_T'][:]
     nc.close()
-    plt.plot(time, temp-5*i, label=func)
+    ax.plot(time, temp-5*i, label=func)
+    ax.set_xlim((-120, 0))
+    ax.set_xlabel('time (ka)')
+    ax.set_ylabel('delta_T (K)')
+    ax.legend(loc='upper left')
+
+# plot smoothing effect
+ax = grid[1]
+for i, expt in enumerate(exptlist):
+    nc = Dataset('grip-1e%d.nc' % expt)
+    time = nc.variables['time'][:]/1000.
+    temp = nc.variables['delta_T'][:]
+    nc.close()
+    ax.plot(time, temp-5*i, label='smooth %d' % (10**expt))
+    ax.set_xlim((-120, 0))
+    ax.set_xlabel('time (ka)')
+    ax.set_ylabel('delta_T (K)')
+    ax.legend(loc='upper left')
 
 # add labels and save
-plt.xlim((-120, 0))
-plt.xlabel('time (ka)')
-plt.ylabel('delta_T (K)')
-plt.legend(loc='upper left')
 plt.show()

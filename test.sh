@@ -5,4 +5,9 @@ do
 	python2 ptsgen.py $func -120000 0 0 -10 -o $func.nc
 done
 
+for expt in {0..3}
+do
+	python2 ptsgen.py grip -120000 0 0 -10 -s $((10**$expt)) -o grip-1e$expt.nc
+done
+
 ./plot.py
