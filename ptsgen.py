@@ -65,7 +65,7 @@ def extract(rec):
 
 
 def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
-             scale_interval=(-32e3, -22e3), var='T'):
+             scale_interval=(-32e3, -22e3), var='delta_T', unit='K'):
     """Generate NetCDF file"""
 
     # initialize netCDF file
@@ -73,8 +73,8 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
     nc.createDimension('time', 0)
     timevar = nc.createVariable('time', 'f4', 'time')
     timevar.units = 'years'
-    tempvar = nc.createVariable('delta_%s' % var, 'f4', 'time')
-    tempvar.units = {'T': 'K', 'P': 'm year-1'}[var]
+    tempvar = nc.createVariable(var, 'f4', 'time')
+    tempvar.units = unit
 
     # in case of a regular function
     if func in ('ramp', 'cos'):
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     # Argument parser
     parser = argparse.ArgumentParser(
-        description='''Scalar offsets time series generator for PISM''')
+        description='''Scalar time series generator for PISM''')
     parser.add_argument('func', type=str, help='Function to use',
                         choices=['ramp', 'cos',
                                  'lapaz21p', 'odp1012', 'odp1020',
@@ -127,11 +127,13 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--scale-interval', type=float, nargs=2,
                         default=(-32e3, -22e3), metavar=('T1', 'T2'),
                         help='Record scaling time interval (default: %(default)s)')
-    parser.add_argument('-v', '--variable',
-                        choices=['T', 'P'], default='T',
+    parser.add_argument('-v', '--variable', default='delta_T',
                         help='Variable name (default: %(default)s)')
+    parser.add_argument('-u', '--unit', default='K',
+                        help='Variable unit (default: %(default)s)')
     args = parser.parse_args()
 
     # Generate netCDF file
     generate(args.func, args.tmin, args.tmax, args.orig, args.ampl,
-             args.length, args.output, args.scale_interval, args.variable)
+             args.length, args.output, args.scale_interval, args.variable,
+             args.unit)
