@@ -82,9 +82,9 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
         t = np.linspace(0, 1, n)
         time = tmin + (tmax-tmin)*t
         if func == 'ramp':
-            data = orig + ampl*t
+            data = t
         elif func == 'cos':
-            data = orig + ampl/2*(1-np.cos(2*pi*t))
+            data = (1-np.cos(2*pi*t))/2
 
     # in case of a proxy record
     else:
@@ -100,12 +100,14 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
         if time[0] > tmin:
             time = np.insert(time, 0, tmin)
             data = np.insert(data, 0, data[0])
-        data = orig + ampl*data
 
     # optional smoothing
     if smoothing:
         window = np.ones(smoothing)/smoothing
         data = np.convolve(data, window, mode='same')
+
+    # linear scaling
+    data = orig + ampl*data
 
     # assign values to variables
     timevar[:] = time
