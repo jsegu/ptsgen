@@ -29,7 +29,7 @@ def retrieve(rec):
 
 
 def extract(rec):
-    """Extract temperature anomaly data from local file"""
+    """Extract anomaly data from local file"""
     txtkw = {
         'domefuji': {'skip_header': 1795, 'usecols': (0, 4)},
         'epica':    {'delimiter': (4, 13, 17, 13, 13),
@@ -45,23 +45,23 @@ def extract(rec):
                      'missing_values': -999, 'usemask': True},
         'odp1020':  {'delimiter': '\t', 'skip_header': 1, 'usecols': (4, 7),
                      'missing_values': -999, 'usemask': True}}[rec]
-    time, temp = np.genfromtxt(rec + '.txt', unpack=True, **txtkw)
+    time, data = np.genfromtxt(rec + '.txt', unpack=True, **txtkw)
     if rec == 'ngrip':
-        temp = temp[::2]
+        data = data[::2]
         time = time[::2]
     if rec == 'domefuji':
         time *= 1000
     elif rec in ('grip', 'ngrip'):
-        temp = -11.88*(temp-temp[0]) - 0.1925*(temp**2-temp[0]**2)
+        data = -11.88*(data-data[0]) - 0.1925*(data**2-data[0]**2)
     elif rec == 'guliya':
         time *= 1000
-        temp -= temp[0]
+        data -= data[0]
     elif rec in ('lapaz21p', 'odp1012', 'odp1020'):
-        time.mask += temp.mask
-        temp.mask += time.mask
+        time.mask += data.mask
+        data.mask += time.mask
         time = time.compressed()*1000
-        temp = temp.compressed()-temp[0]
-    return time, temp
+        data = data.compressed()-data[0]
+    return time, data
 
 
 def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
@@ -74,39 +74,42 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
     nc.createDimension('time', 0)
     timevar = nc.createVariable('time', 'f4', 'time')
     timevar.units = 'years'
-    tempvar = nc.createVariable(var, 'f4', 'time')
-    tempvar.units = unit
+    datavar = nc.createVariable(var, 'f4', 'time')
+    datavar.units = unit
 
     # in case of a regular function
     if func in ('ramp', 'cos'):
         t = np.linspace(0, 1, n)
-        timevar[:] = tmin + (tmax-tmin)*t
+        time = tmin + (tmax-tmin)*t
         if func == 'ramp':
-            tempvar[:] = orig + ampl*t
+            data = orig + ampl*t
         elif func == 'cos':
-            tempvar[:] = orig + ampl/2*(1-np.cos(2*pi*t))
+            data = orig + ampl/2*(1-np.cos(2*pi*t))
 
     # in case of a proxy record
     else:
         retrieve(func)
-        time, temp = extract(func)
+        time, data = extract(func)
         time = -time[::-1]
-        temp = temp[::-1]
+        data = data[::-1]
         t1, t2 = scale_interval
-        temp /= temp[(t1 < time) * (time < t2)].mean()
+        data /= data[(t1 < time) * (time < t2)].mean()
         if time[-1] < tmax:
             time = np.append(time, tmax)
-            temp = np.append(temp, temp[-1])
+            data = np.append(data, data[-1])
         if time[0] > tmin:
             time = np.insert(time, 0, tmin)
-            temp = np.insert(temp, 0, temp[0])
-        timevar[:] = time
-        tempvar[:] = orig + ampl*temp
+            data = np.insert(data, 0, data[0])
+        data = orig + ampl*data
 
     # optional smoothing
     if smoothing:
         window = np.ones(smoothing)/smoothing
-        tempvar[:] = np.convolve(tempvar[:], window, mode='same')
+        data = np.convolve(data, window, mode='same')
+
+    # assign values to variables
+    timevar[:] = time
+    datavar[:] = data
 
     # close file
     nc.close()
