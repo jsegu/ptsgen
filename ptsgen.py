@@ -65,7 +65,8 @@ def extract(rec):
 
 
 def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
-             scale_interval=(-32e3, -22e3), var='delta_T', unit='K'):
+             scale_interval=(-32e3, -22e3), var='delta_T', unit='K',
+             smoothing=None):
     """Generate NetCDF file"""
 
     # initialize netCDF file
@@ -102,6 +103,11 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
         timevar[:] = time
         tempvar[:] = orig + ampl*temp
 
+    # optional smoothing
+    if smoothing:
+        window = np.ones(smoothing)/smoothing
+        tempvar[:] = np.convolve(tempvar[:], window, mode='same')
+
     # close file
     nc.close()
 
@@ -131,9 +137,11 @@ if __name__ == "__main__":
                         help='Variable name (default: %(default)s)')
     parser.add_argument('-u', '--unit', default='K',
                         help='Variable unit (default: %(default)s)')
+    parser.add_argument('-s', '--smoothing', type=int, default=None,
+                        help='Optional smoothing window lenght (default: %(default)s)')
     args = parser.parse_args()
 
     # Generate netCDF file
     generate(args.func, args.tmin, args.tmax, args.orig, args.ampl,
              args.length, args.output, args.scale_interval, args.variable,
-             args.unit)
+             args.unit, args.smoothing)
