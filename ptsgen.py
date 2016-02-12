@@ -2,7 +2,9 @@
 """PISM time series generator"""
 
 import os
+import sys
 import urllib
+from time import strftime
 from math import pi
 from netCDF4 import Dataset as NC
 import numpy as np
@@ -112,6 +114,9 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
     # assign values to variables
     timevar[:] = time
     datavar[:] = data
+
+    # add history line
+    nc.history = strftime('%Y-%m-%d %H:%M:%S %Z: ') + ' '.join(sys.argv)
 
     # close file
     nc.close()
