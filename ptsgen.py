@@ -19,7 +19,8 @@ data_sources = {
     'vostok':   _noaa + 'icecore/antarctica/vostok/deutnat.txt',
     'ngrip':    _noaa + 'icecore/greenland/summit/ngrip/isotopes/ngrip-d18o-50yr.txt',
     'grip':     _noaa + 'icecore/greenland/summit/grip/isotopes/gripd18o.txt',
-    'guliya':   _noaa + 'icecore/trop/guliya/guliya1997.txt'}
+    'guliya':   _noaa + 'icecore/trop/guliya/guliya1997.txt',
+    'md012444': 'https://doi.pangaea.de/10.1594/PANGAEA.771891?format=textfile'}
 
 
 def retrieve(rec):
@@ -46,7 +47,9 @@ def extract(rec):
         'odp1012':  {'delimiter': '\t', 'skip_header': 1, 'usecols': (6, 8),
                      'missing_values': -999, 'usemask': True},
         'odp1020':  {'delimiter': '\t', 'skip_header': 1, 'usecols': (4, 7),
-                     'missing_values': -999, 'usemask': True}}[rec]
+                     'missing_values': -999, 'usemask': True},
+        'md012444': {'delimiter': '\t', 'skip_header': 15, 'usecols': (1, 2)},
+    }[rec]
     time, data = np.genfromtxt(rec + '.txt', unpack=True, **txtkw)
     if rec == 'ngrip':
         data = data[::2]
@@ -55,7 +58,7 @@ def extract(rec):
         time *= 1000
     elif rec in ('grip', 'ngrip'):
         data = -11.88*(data-data[0]) - 0.1925*(data**2-data[0]**2)
-    elif rec == 'guliya':
+    elif rec in ('guliya', 'md012444'):
         time *= 1000
         data -= data[0]
     elif rec in ('lapaz21p', 'odp1012', 'odp1020'):
@@ -63,6 +66,10 @@ def extract(rec):
         data.mask += time.mask
         time = time.compressed()*1000
         data = data.compressed()-data[0]
+    if rec == 'md012444':
+        argsort = time.argsort()
+        time = time[argsort]
+        data = data[argsort]
     return time, data
 
 
@@ -132,7 +139,8 @@ if __name__ == "__main__":
                         choices=['ramp', 'cos',
                                  'lapaz21p', 'odp1012', 'odp1020',
                                  'domefuji', 'epica', 'vostok',
-                                 'ngrip', 'grip', 'guliya'])
+                                 'ngrip', 'grip', 'guliya',
+                                 'md012444'])
     parser.add_argument('tmin', type=float, help='Start time in years')
     parser.add_argument('tmax', type=float, help='End time in years')
     parser.add_argument('orig', type=float, help='Value at origin')

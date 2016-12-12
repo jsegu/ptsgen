@@ -1,11 +1,3 @@
-domefuji.txt
-epica.txt
-vostok.txt
-ngrip.txt
-grip.txt
-guliya.txt
-lapaz21p.txt
-odp1012.txt
-odp1020.txt
 *.pyc
 *.nc
+*.txt

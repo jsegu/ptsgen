@@ -8,7 +8,7 @@ plt.rc('font', size=8)
 funclist = ['cos', 'ramp',
             'lapaz21p', 'odp1012', 'odp1020',
             'domefuji', 'epica',  'vostok',
-            'ngrip', 'grip', 'guliya']
+            'ngrip', 'grip', 'guliya', 'md012444']
 exptlist = range(4)
 
 # initialize figure
