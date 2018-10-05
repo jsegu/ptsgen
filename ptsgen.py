@@ -24,14 +24,6 @@ data_sources = {
     'md012444': 'https://doi.pangaea.de/10.1594/PANGAEA.771891?format=textfile'}
 
 
-def retrieve(rec):
-    """Retrieve record data from the web unless local copy exists."""
-    filename = rec + '.txt'
-    if not os.path.isfile(filename):
-        urllib.request.urlretrieve(data_sources[rec], filename)
-    return filename
-
-
 def extract(rec):
     """Extract anomaly data from local file"""
     txtkw = {
@@ -51,7 +43,8 @@ def extract(rec):
                      'missing_values': -999, 'usemask': True},
         'md012444': {'delimiter': '\t', 'skip_header': 15, 'usecols': (1, 2)},
     }[rec]
-    time, data = np.genfromtxt(rec + '.txt', unpack=True, encoding='latin1', **txtkw)
+    time, data = np.genfromtxt(data_sources[rec], unpack=True,
+                               encoding='latin1', **txtkw)
     if rec == 'ngrip':
         data = data[::2]
         time = time[::2]
@@ -98,7 +91,6 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
 
     # in case of a proxy record
     else:
-        retrieve(func)
         time, data = extract(func)
         time = -time[::-1]
         data = data[::-1]
