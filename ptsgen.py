@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-"""PISM time series generator"""
+# Copyright (c) 2018, Julien Seguinot <seguinot@vaw.baug.ethz.ch>
+# GNU General Public License v3.0+ (https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import os
 import sys
-import urllib
+import urllib.request
 from time import strftime
 from math import pi
 from netCDF4 import Dataset as NC
@@ -27,7 +28,7 @@ def retrieve(rec):
     """Retrieve record data from the web unless local copy exists."""
     filename = rec + '.txt'
     if not os.path.isfile(filename):
-        urllib.urlretrieve(data_sources[rec], filename)
+        urllib.request.urlretrieve(data_sources[rec], filename)
     return filename
 
 
@@ -50,7 +51,7 @@ def extract(rec):
                      'missing_values': -999, 'usemask': True},
         'md012444': {'delimiter': '\t', 'skip_header': 15, 'usecols': (1, 2)},
     }[rec]
-    time, data = np.genfromtxt(rec + '.txt', unpack=True, **txtkw)
+    time, data = np.genfromtxt(rec + '.txt', unpack=True, encoding='latin1', **txtkw)
     if rec == 'ngrip':
         data = data[::2]
         time = time[::2]
