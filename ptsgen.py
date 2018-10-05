@@ -2,47 +2,48 @@
 # Copyright (c) 2018, Julien Seguinot <seguinot@vaw.baug.ethz.ch>
 # GNU General Public License v3.0+ (https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import os
+"""
+Prepare scalar modifiers for the Parallel Ice Sheet Model.
+"""
+
 import sys
-import urllib.request
 from time import strftime
 from math import pi
 from netCDF4 import Dataset as NC
 import numpy as np
 
 _noaa = 'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
-data_sources = {
-    'lapaz21p': _noaa + 'contributions_by_author/herbert2001/lapaz21p.txt',
-    'odp1012':  _noaa + 'contributions_by_author/herbert2001/odp1012.txt',
-    'odp1020':  _noaa + 'contributions_by_author/herbert2001/odp1020.txt',
-    'domefuji': _noaa + 'icecore/antarctica/domefuji/df2012isotope-temperature.txt',
-    'epica':    _noaa + 'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
-    'vostok':   _noaa + 'icecore/antarctica/vostok/deutnat.txt',
-    'ngrip':    _noaa + 'icecore/greenland/summit/ngrip/isotopes/ngrip-d18o-50yr.txt',
-    'grip':     _noaa + 'icecore/greenland/summit/grip/isotopes/gripd18o.txt',
-    'guliya':   _noaa + 'icecore/trop/guliya/guliya1997.txt',
-    'md012444': 'https://doi.pangaea.de/10.1594/PANGAEA.771891?format=textfile'}
+data_sources = dict(
+    lapaz21p=_noaa+'contributions_by_author/herbert2001/lapaz21p.txt',
+    odp1012=_noaa+'contributions_by_author/herbert2001/odp1012.txt',
+    odp1020=_noaa+'contributions_by_author/herbert2001/odp1020.txt',
+    domefuji=_noaa+'icecore/antarctica/domefuji/df2012isotope-temperature.txt',
+    epica=_noaa+'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
+    vostok=_noaa+'icecore/antarctica/vostok/deutnat.txt',
+    ngrip=_noaa+'icecore/greenland/summit/ngrip/isotopes/ngrip-d18o-50yr.txt',
+    grip=_noaa+'icecore/greenland/summit/grip/isotopes/gripd18o.txt',
+    guliya=_noaa+'icecore/trop/guliya/guliya1997.txt',
+    md012444='https://doi.pangaea.de/10.1594/PANGAEA.771891?format=textfile')
 
 
 def extract(rec):
     """Extract anomaly data from local file"""
-    txtkw = {
-        'domefuji': {'skip_header': 1795, 'usecols': (0, 4)},
-        'epica':    {'delimiter': (4, 13, 17, 13, 13),
-                     'skip_header': 104, 'skip_footer': 1, 'usecols': (2, 4)},
-        'vostok':   {'skip_header': 111, 'usecols': (1, 3)},
-        'ngrip':    {'skip_header': 80, 'usecols': (0, 1),
-                     'converters': {0: lambda s: float(s.replace(',',''))}},
-        'grip':     {'skip_header': 37, 'usecols': (2, 1)},
-        'guliya':   {'skip_header': 445, 'skip_footer': 33, 'usecols': (0, 1)},
-        'lapaz21p': {'delimiter': '\t', 'skip_header': 1, 'usecols': (2, 5),
-                     'missing_values': -999, 'usemask': True},
-        'odp1012':  {'delimiter': '\t', 'skip_header': 1, 'usecols': (6, 8),
-                     'missing_values': -999, 'usemask': True},
-        'odp1020':  {'delimiter': '\t', 'skip_header': 1, 'usecols': (4, 7),
-                     'missing_values': -999, 'usemask': True},
-        'md012444': {'delimiter': '\t', 'skip_header': 15, 'usecols': (1, 2)},
-    }[rec]
+    txtkw = dict(
+        domefuji=dict(skip_header=1795, usecols=(0, 4)),
+        epica=dict(delimiter=(4, 13, 17, 13, 13), skip_header=104,
+                   skip_footer=1, usecols=(2, 4)),
+        vostok=dict(skip_header=111, usecols=(1, 3)),
+        ngrip=dict(skip_header=80, usecols=(0, 1),
+                   converters={0: lambda s: float(s.replace(',', ''))}),
+        grip=dict(skip_header=37, usecols=(2, 1)),
+        guliya=dict(skip_header=445, skip_footer=33, usecols=(0, 1)),
+        lapaz21p=dict(delimiter='\t', skip_header=1, usecols=(2, 5),
+                      missing_values=-999, usemask=True),
+        odp1012=dict(delimiter='\t', skip_header=1, usecols=(6, 8),
+                     missing_values=-999, usemask=True),
+        odp1020=dict(delimiter='\t', skip_header=1, usecols=(4, 7),
+                     missing_values=-999, usemask=True),
+        md012444=dict(delimiter='\t', skip_header=15, usecols=(1, 2)))[rec]
     time, data = np.genfromtxt(data_sources[rec], unpack=True,
                                encoding='latin1', **txtkw)
     if rec == 'ngrip':
@@ -143,13 +144,13 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', help='output file')
     parser.add_argument('-i', '--scale-interval', type=float, nargs=2,
                         default=(-32e3, -22e3), metavar=('T1', 'T2'),
-                        help='Record scaling time interval (default: %(default)s)')
+                        help='Record scaling interval (default: %(default)s)')
     parser.add_argument('-v', '--variable', default='delta_T',
                         help='Variable name (default: %(default)s)')
     parser.add_argument('-u', '--unit', default='K',
                         help='Variable unit (default: %(default)s)')
     parser.add_argument('-s', '--smoothing', type=int, default=None,
-                        help='Optional smoothing window lenght (default: %(default)s)')
+                        help='Smoothing window lenght (default: %(default)s)')
     args = parser.parse_args()
 
     # Generate netCDF file
