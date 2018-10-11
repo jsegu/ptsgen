@@ -12,40 +12,51 @@ from math import pi
 from netCDF4 import Dataset as NC
 import numpy as np
 
-_noaa = 'ftp://ftp.ncdc.noaa.gov/pub/data/paleo/'
-data_sources = dict(
-    lapaz21p=_noaa+'contributions_by_author/herbert2001/lapaz21p.txt',
-    odp1012=_noaa+'contributions_by_author/herbert2001/odp1012.txt',
-    odp1020=_noaa+'contributions_by_author/herbert2001/odp1020.txt',
-    domefuji=_noaa+'icecore/antarctica/domefuji/df2012isotope-temperature.txt',
-    epica=_noaa+'icecore/antarctica/epica_domec/edc3deuttemp2007.txt',
-    vostok=_noaa+'icecore/antarctica/vostok/deutnat.txt',
-    ngrip=_noaa+'icecore/greenland/summit/ngrip/isotopes/ngrip-d18o-50yr.txt',
-    grip=_noaa+'icecore/greenland/summit/grip/isotopes/gripd18o.txt',
-    guliya=_noaa+'icecore/trop/guliya/guliya1997.txt',
-    md012444='https://doi.pangaea.de/10.1594/PANGAEA.771891?format=textfile')
+
+_NOAA = 'https://www1.ncdc.noaa.gov/pub/data/paleo/'
+_NOAA_ANTARCTICA = _NOAA + 'icecore/antarctica/'
+_NOAA_GREENLAND = _NOAA + 'icecore/greenland/'
+RECORDS = dict(
+    lapaz21p=dict(
+        fname=_NOAA+'contributions_by_author/herbert2001/lapaz21p.txt',
+        delimiter='\t', missing_values=-999, skip_header=1, usecols=(2, 5),
+        usemask=True),
+    odp1012=dict(
+        fname=_NOAA+'contributions_by_author/herbert2001/odp1012.txt',
+        delimiter='\t', missing_values=-999, skip_header=1, usecols=(6, 8),
+        usemask=True),
+    odp1020=dict(
+        fname=_NOAA+'contributions_by_author/herbert2001/odp1020.txt',
+        delimiter='\t', missing_values=-999, skip_header=1, usecols=(4, 7),
+        usemask=True),
+    domefuji=dict(
+        fname=_NOAA_ANTARCTICA+'domefuji/df2012isotope-temperature.txt',
+        skip_header=1795, usecols=(0, 4)),
+    epica=dict(
+        fname=_NOAA_ANTARCTICA+'epica_domec/edc3deuttemp2007.txt',
+        delimiter=(4, 13, 17, 13, 13), skip_header=104, skip_footer=1,
+        usecols=(2, 4)),
+    vostok=dict(
+        fname=_NOAA_ANTARCTICA+'vostok/deutnat.txt',
+        skip_header=111, usecols=(1, 3)),
+    ngrip=dict(
+        fname=_NOAA_GREENLAND+'summit/ngrip/isotopes/ngrip-d18o-50yr.txt',
+        converters={0: lambda s: float(s.replace(',', ''))},
+        skip_header=80, usecols=(0, 1)),
+    grip=dict(
+        fname=_NOAA_GREENLAND+'summit/grip/isotopes/gripd18o.txt',
+        skip_header=37, usecols=(2, 1)),
+    guliya=dict(
+        fname=_NOAA+'icecore/trop/guliya/guliya1997.txt',
+        skip_header=445, skip_footer=33, usecols=(0, 1)),
+    md012444=dict(
+        fname='https://doi.pangaea.de/10.1594/PANGAEA.771891?format=textfile',
+        delimiter='\t', skip_header=15, usecols=(1, 2)))
 
 
 def extract(rec):
     """Extract anomaly data from local file"""
-    txtkw = dict(
-        domefuji=dict(skip_header=1795, usecols=(0, 4)),
-        epica=dict(delimiter=(4, 13, 17, 13, 13), skip_header=104,
-                   skip_footer=1, usecols=(2, 4)),
-        vostok=dict(skip_header=111, usecols=(1, 3)),
-        ngrip=dict(skip_header=80, usecols=(0, 1),
-                   converters={0: lambda s: float(s.replace(',', ''))}),
-        grip=dict(skip_header=37, usecols=(2, 1)),
-        guliya=dict(skip_header=445, skip_footer=33, usecols=(0, 1)),
-        lapaz21p=dict(delimiter='\t', skip_header=1, usecols=(2, 5),
-                      missing_values=-999, usemask=True),
-        odp1012=dict(delimiter='\t', skip_header=1, usecols=(6, 8),
-                     missing_values=-999, usemask=True),
-        odp1020=dict(delimiter='\t', skip_header=1, usecols=(4, 7),
-                     missing_values=-999, usemask=True),
-        md012444=dict(delimiter='\t', skip_header=15, usecols=(1, 2)))[rec]
-    time, data = np.genfromtxt(data_sources[rec], unpack=True,
-                               encoding='latin1', **txtkw)
+    time, data = np.genfromtxt(encoding='latin1', unpack=True, **RECORDS[rec])
     if rec == 'ngrip':
         data = data[::2]
         time = time[::2]
