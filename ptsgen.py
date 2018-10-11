@@ -8,7 +8,6 @@ Prepare scalar modifiers for the Parallel Ice Sheet Model.
 
 import sys
 from time import strftime
-from math import pi
 import netCDF4 as nc4
 import numpy as np
 
@@ -99,7 +98,7 @@ def generate(func, tmin, tmax, orig, ampl, num=101, output=None,
         if func == 'ramp':
             data = ramp
         elif func == 'cos':
-            data = (1-np.cos(2*pi*ramp))/2
+            data = (1-np.cos(2*np.pi*ramp))/2
 
     # in case of a proxy record
     else:
