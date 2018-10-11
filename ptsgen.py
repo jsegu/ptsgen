@@ -9,7 +9,7 @@ Prepare scalar modifiers for the Parallel Ice Sheet Model.
 import sys
 from time import strftime
 from math import pi
-from netCDF4 import Dataset as NC
+import netCDF4 as nc4
 import numpy as np
 
 
@@ -79,35 +79,35 @@ def extract(rec):
     return time, data
 
 
-def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
+def generate(func, tmin, tmax, orig, ampl, num=101, output=None,
              scale_interval=(-32e3, -22e3), var='delta_T', unit='K',
              smoothing=None):
     """Generate NetCDF file"""
 
     # initialize netCDF file
-    nc = NC(output or 'delta_%s.nc' % var, 'w', format='NETCDF3_CLASSIC')
-    nc.createDimension('time', 0)
-    timevar = nc.createVariable('time', 'f4', 'time')
+    dataset = nc4.Dataset(output or 'delta_%s.nc' % var, 'w')
+    dataset.createDimension('time', 0)
+    timevar = dataset.createVariable('time', 'f4', 'time')
     timevar.units = 'years'
-    datavar = nc.createVariable(var, 'f4', 'time')
+    datavar = dataset.createVariable(var, 'f4', 'time')
     datavar.units = unit
 
     # in case of a regular function
     if func in ('ramp', 'cos'):
-        t = np.linspace(0, 1, n)
-        time = tmin + (tmax-tmin)*t
+        ramp = np.linspace(0, 1, num)
+        time = tmin + (tmax-tmin)*ramp
         if func == 'ramp':
-            data = t
+            data = ramp
         elif func == 'cos':
-            data = (1-np.cos(2*pi*t))/2
+            data = (1-np.cos(2*pi*ramp))/2
 
     # in case of a proxy record
     else:
         time, data = extract(func)
         time = -time[::-1]
         data = data[::-1]
-        t1, t2 = scale_interval
-        data /= data[(t1 < time) * (time < t2)].mean()
+        start, end = scale_interval
+        data /= data[(start < time) * (time < end)].mean()
         if time[-1] < tmax:
             time = np.append(time, tmax)
             data = np.append(data, data[-1])
@@ -128,13 +128,15 @@ def generate(func, tmin, tmax, orig, ampl, n=101, output=None,
     datavar[:] = data
 
     # add history line
-    nc.history = strftime('%Y-%m-%d %H:%M:%S %Z: ') + ' '.join(sys.argv)
+    dataset.history = strftime('%Y-%m-%d %H:%M:%S %Z: ') + ' '.join(sys.argv)
 
     # close file
-    nc.close()
+    dataset.close()
 
 
-if __name__ == "__main__":
+def main():
+    """Main program for command-line execution."""
+
     import argparse
 
     # Argument parser
@@ -168,3 +170,7 @@ if __name__ == "__main__":
     generate(args.func, args.tmin, args.tmax, args.orig, args.ampl,
              args.length, args.output, args.scale_interval, args.variable,
              args.unit, args.smoothing)
+
+
+if __name__ == '__main__':
+    main()
