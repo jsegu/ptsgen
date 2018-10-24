@@ -1,3 +1,7 @@
 *.pyc
 *.nc
 *.txt
+PANGAEA.*
+/build
+/dist
+/*.egg-info
