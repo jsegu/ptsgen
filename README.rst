@@ -4,6 +4,13 @@
 PISM-Palseries
 ==============
 
+.. image:: https://img.shields.io/pypi/v/pism-palseries.svg
+   :target: https://pypi.python.org/pypi/pism-palseries
+.. image:: https://img.shields.io/pypi/l/pism-palseries.svg
+   :target: https://www.gnu.org/licenses/gpl-3.0.txt
+.. image:: https://zenodo.org/badge/11448230.svg
+   :target: https://zenodo.org/badge/latestdoi/11448230
+
 A small script to prepare scalar modifier temperature and precipitation time
 series for the Parallel Ice Sheet Model (PISM_) based on online-available
 palaeo-climate records or simple mathematical functions.
